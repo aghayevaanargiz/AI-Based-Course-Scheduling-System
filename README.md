@@ -29,7 +29,7 @@ University course timetabling is a complex combinatorial problem involving the a
 
 ## Dataset
 
-The dataset was constructed from actual university course offerings and faculty information, with realistic availability constraints.
+The dataset was constructed from actual course offerings and faculty information from the **[School of Information Technologies and Engineering](https://www.ada.edu.az/en/schools/site)** at ADA University, with realistic availability constraints.
 
 ### Data Files
 
