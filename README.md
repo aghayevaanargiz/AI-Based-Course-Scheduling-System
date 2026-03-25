@@ -12,127 +12,120 @@ A constraint satisfaction problem (CSP) solution for university course timetabli
 
 University course timetabling is a complex combinatorial problem involving the assignment of course sections to time slots, rooms, and instructors while satisfying numerous constraints. This project implements an AI-based scheduling system that generates feasible weekly timetables for the School of IT and Engineering.
 
-**Problem Type:** Constraint Satisfaction Problem (CSP) with soft constraints
+**Problem Type:** Constraint Satisfaction Problem (CSP) with hard and soft constraints
 
-### Problem Structure
+### Problem Statistics
 
-| Component | Description |
-|-----------|-------------|
-| **Course Sections** | Each section requires two weekly meetings on different days |
-| **Variables** | Each meeting (2 per section) with domain of (day, time, room, instructor) |
-| **Hard Constraints** | Must be satisfied for schedule to be valid |
-| **Soft Constraints** | Preferences with penalty weights to be minimized |
+| Metric | Value |
+|--------|-------|
+| Course Sections | 41 |
+| Instructors | 37 (professors and instructors) |
+| Rooms | 14 |
+| Time Slots | 7 slots/day × 5 days = 35 slots |
+| Meeting Variables | 82 (2 per section) |
+| Average Domain Size | 184 values per variable |
 
 ---
 
-## Data
+## Dataset
 
-### Dataset Construction
+The dataset was constructed from actual university course offerings and faculty information, with realistic availability constraints.
 
-The dataset was constructed by collecting real structural information from the university's course offerings, including:
+### Data Files
 
-| Component | Source |
-|-----------|--------|
-| **Course Sections** | Actual courses offered by the School of IT and Engineering |
-| **Instructors** | Real faculty members with their names and taught courses |
-| **Room Capacities** | Actual classroom capacities in the university |
-| **Instructor Availability** | Synthetically generated based on realistic academic schedules |
-| **Workload Distributions** | Designed to reflect typical teaching loads |
+| Sheet | Description | Records |
+|-------|-------------|---------|
+| **Courses** | Course sections with enrollment counts | 41 |
+| **InstructorCourses** | Instructor-to-course assignments | 36 |
+| **Hard** | Instructor unavailability constraints | 90 |
+| **Soft** | Instructor teaching preferences (1-5) | 150+ |
+| **RoomSeatingCapacity** | Classroom capacities | 14 |
 
-### Data Collection Process
+### Course Distribution
 
-1. **Course Information**: Extracted from the university's course catalog, including course codes, titles, enrollment sizes, and instructor assignments
+| Department | Sections |
+|------------|----------|
+| CSCI (Computer Science) | 26 |
+| INFT (Information Technology) | 10 |
+| SITE (School Core) | 2 |
+| MATH (Mathematics) | 6 |
 
-2. **Instructor Profiles**: Compiled actual faculty names and the courses they teach within the School of IT and Engineering
+### Instructor Categories
 
-3. **Room Data**: Gathered real classroom capacities and availability patterns
+| Type | Weekly Limit |
+|------|--------------|
+| Professors (PROF) | 6 meetings/week |
+| Instructors (INST) | 6 meetings/week |
 
-4. **Availability Constraints**: Constructed realistic instructor time availability based on typical academic schedules and teaching responsibilities
+### Room Capacities
 
-5. **Workload Balancing**: Designed soft constraints to ensure fair distribution across instructors
-
-### Data Format
-
-The dataset is organized across multiple Excel files:
-
-| File | Description |
-|------|-------------|
-| `courses.xlsx` | Course sections, enrollment numbers, required meetings |
-| `instructors.xlsx` | Faculty names, taught courses, availability constraints |
-| `rooms.xlsx` | Room capacities and types |
-| `availability.xlsx` | Instructor time slot availability per day |
-
-### Note
-
-Instructor availability and certain workload distributions were synthetically generated to complete missing components while preserving realistic academic and operational constraints. The dataset is suitable for evaluating constraint-based scheduling methods and reflects the actual course structure of the School of IT and Engineering.
+| Capacity Range | Rooms |
+|----------------|-------|
+| 15-20 seats | 5 |
+| 25-35 seats | 5 |
+| 40-55 seats | 4 |
 
 ---
 
 ## Constraints
 
-### Hard Constraints
+### Hard Constraints (Must Satisfy)
 
 | Constraint | Description |
 |------------|-------------|
-| Instructor Availability | Meetings only during instructor's available time slots |
-| Room Capacity | Room must accommodate enrolled students |
+| Instructor Availability | Meetings only during available time slots (from Hard sheet) |
+| Room Capacity | Room capacity must meet or exceed enrollment |
 | No Conflicts | No instructor or room assigned to two meetings simultaneously |
 | Meeting Separation | Two meetings of same section on different days |
 | Instructor Consistency | Same instructor for both meetings of a section |
-| Master Course Limits | Maximum 2 master-level courses per day |
-| Multi-Section Rules | Different instructors for different sections of same course |
+| Master Course Limit | Maximum 2 master-level meetings per day |
+| Two-Instructor Rule | Courses with ≥3 sections use ≤2 distinct instructors |
 
-### Soft Constraints
+### Soft Constraints (Minimized)
 
-| Constraint | Penalty |
-|------------|---------|
-| Daily Workload | Penalty for exceeding max meetings per day per instructor |
-| Weekly Workload | Penalty for exceeding max meetings per week per instructor |
+| Constraint | Weight | Limit |
+|------------|--------|-------|
+| Daily Workload Excess | 5 | Max 2 meetings/day/instructor |
+| Weekly Workload Excess | 3 | Max 6 meetings/week/instructor |
 
 ---
 
-## Methodology
+## Algorithms Implemented
 
-### Algorithm
+### 1. Baseline Solver (Fixed Order)
+- Simple backtracking with fixed variable order
+- Branch-and-bound pruning
+- Serves as performance baseline
 
-**Backtracking Search with Branch-and-Bound**
+### 2. MRV Solver
+- Minimum Remaining Values heuristic
+- Selects most constrained variable first
+- Reduces search space by prioritizing variables with fewest options
 
-- Depth-first search exploring assignment space
-- Early pruning based on accumulated soft constraint penalties
-- Complete search guarantees finding optimal solution if one exists
-
-### Heuristics
-
-| Heuristic | Purpose | Impact |
-|-----------|---------|--------|
-| **MRV (Minimum Remaining Values)** | Select variable with smallest feasible domain first | Reduces branching factor by prioritizing constrained variables |
-| **LCV (Least Constraining Value)** | Order values that leave most options for remaining variables | Preserves flexibility, reduces backtracking |
+### 3. MRV + LCV Solver
+- MRV for variable selection
+- Least Constraining Value for value ordering
+- Values that leave most options for remaining variables are tried first
 
 ---
 
 ## Results
 
-### Search Performance Comparison
+### Performance Comparison
 
-| Configuration | Nodes Expanded | Max Depth | Solution Quality |
-|--------------|----------------|-----------|------------------|
-| Fixed Order Baseline | High | — | Satisfies hard constraints |
-| MRV Only | Reduced | — | Improved efficiency |
-| **MRV + LCV** | **8,398** | **Full depth** | **Optimal schedule** |
+| Solver | Nodes Expanded | Max Depth | Avg Branching | Max Branching | Penalty | Time (s) |
+|--------|---------------|-----------|---------------|---------------|---------|----------|
+| Fixed Order Baseline | — | 82 | — | — | 44 | 300.07 |
+| MRV Only | 8,062 | 82 | 82.19 | 249 | 37 | 300.01 |
+| **MRV + LCV** | **8,398** | **82** | **86.11** | **254** | **12** | **300.07** |
 
-### Key Metrics
+### Key Findings
 
-| Metric | Value |
-|--------|-------|
-| Total Variables | Number of meetings (2 × course sections) |
-| Nodes Explored | 8,398 |
-| Hard Constraints | 100% satisfied |
-| Soft Constraint Penalty | Minimized |
-
-### Workload Distribution
-
-The generated schedule achieves balanced instructor workloads across days and weeks, demonstrating practical applicability.
+| Finding | Insight |
+|---------|---------|
+| MRV reduces search complexity | 8,062 nodes explored with MRV vs significantly more without |
+| MRV + LCV achieves lowest penalty | Penalty reduced from 44 to 12 (73% improvement) |
+| Both heuristics reach full depth | All 82 meeting variables assigned successfully |
+| Soft constraints effectively minimized | Daily and weekly workload limits respected where possible |
 
 ---
-
-## Repository Structure
