@@ -129,3 +129,8 @@ The dataset was constructed from actual university course offerings and faculty 
 | Soft constraints effectively minimized | Daily and weekly workload limits respected where possible |
 
 ---
+
+## Requirements
+pandas>=1.3.0
+openpyxl>=3.0.0
+numpy>=1.21.0
